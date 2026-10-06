@@ -188,3 +188,4 @@ INVOICE_GROUP_ADDRESS=india.invoicing@cleantechsolar.com
 
 # Global settings instance
 settings = Settings()
+# hh
