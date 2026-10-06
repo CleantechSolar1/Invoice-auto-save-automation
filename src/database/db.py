@@ -18,16 +18,33 @@ class DatabaseManager:
         self._init_db()
 
     def _get_connection(self) -> sqlite3.Connection:
-        """Create and return a configured SQLite connection."""
+        """Create and return a configured SQLite connection with safe fallback for read-only environments."""
         parent_dir = Path(self.db_path).parent
         if str(parent_dir) not in ("", "."):
-            parent_dir.mkdir(parents=True, exist_ok=True)
+            try:
+                parent_dir.mkdir(parents=True, exist_ok=True)
+            except (PermissionError, OSError):
+                self.db_path = "/tmp/invoice_automation.db"
 
-        conn = sqlite3.connect(self.db_path, timeout=30.0)
+        try:
+            conn = sqlite3.connect(self.db_path, timeout=30.0)
+        except (sqlite3.OperationalError, PermissionError, OSError):
+            self.db_path = "/tmp/invoice_automation.db"
+            conn = sqlite3.connect(self.db_path, timeout=30.0)
+
         conn.row_factory = sqlite3.Row
-        # Enable WAL mode for high concurrency and robustness
-        conn.execute("PRAGMA journal_mode=WAL;")
-        conn.execute("PRAGMA foreign_keys=ON;")
+        # Enable WAL mode if supported, fallback cleanly if journal files cannot be created
+        try:
+            conn.execute("PRAGMA journal_mode=WAL;")
+        except sqlite3.OperationalError:
+            try:
+                conn.execute("PRAGMA journal_mode=DELETE;")
+            except sqlite3.OperationalError:
+                pass
+        try:
+            conn.execute("PRAGMA foreign_keys=ON;")
+        except sqlite3.OperationalError:
+            pass
         return conn
 
     def _init_db(self) -> None:

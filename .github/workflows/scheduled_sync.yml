@@ -1,0 +1,20 @@
+name: Scheduled Invoice Sync
+on:
+  schedule:
+    # Run every 10 minutes (cron: '*/10 * * * *')
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  ping-service:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Cleantech Invoice Automation Sync
+        run: |
+          echo "Triggering Cleantech Invoice Automation on Vercel..."
+          HTTP_STATUS=$(curl -s -o response.json -w "%{http_code}" "https://invoice-auto-save-automation.vercel.app/?trigger=github_actions&format=json")
+          echo "Response HTTP Status: $HTTP_STATUS"
+          cat response.json
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Warning: Service returned non-200 status $HTTP_STATUS"
+          fi

@@ -119,6 +119,22 @@ class Settings(BaseSettings):
             v = "/" + v
         return v.rstrip("/")
 
+    @field_validator("database_path")
+    @classmethod
+    def clean_database_path(cls, v: str) -> str:
+        """Ensure database path is placed in writable /tmp when running in serverless."""
+        if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+            return "/tmp/invoice_automation.db"
+        return v
+
+    @field_validator("log_file_path")
+    @classmethod
+    def clean_log_file_path(cls, v: str) -> str:
+        """Ensure log path is placed in writable /tmp when running in serverless."""
+        if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+            return "/tmp/invoice_automation.log"
+        return v
+
     @field_validator("processing_mailbox", "invoice_group_address")
     @classmethod
     def clean_email(cls, v: str) -> str:
