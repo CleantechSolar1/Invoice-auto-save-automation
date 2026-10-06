@@ -43,3 +43,4 @@ htmlcov/
 scratch/
 tmp/
 temp/
+*.pid

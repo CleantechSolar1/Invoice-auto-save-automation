@@ -89,5 +89,20 @@ def main():
         service.start_polling()
 
 
+def handler(*args, **kwargs):
+    """Minimal compatibility handler for platforms inspecting WSGI/ASGI entry points."""
+    return {
+        "statusCode": 200,
+        "headers": {"Content-Type": "text/plain"},
+        "body": "Cleantech Invoice Automation Worker is designed to run as a background service.",
+    }
+
+
+# Exported variables for platforms searching for a top-level web handler
+app = handler
+application = handler
+
+
 if __name__ == "__main__":
     main()
+

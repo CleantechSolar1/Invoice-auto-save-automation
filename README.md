@@ -255,26 +255,67 @@ python -m src.main --dry-run --once
 
 ---
 
-## 11. Production Scheduling
+## 11. Production Deployment (Without Docker & With Docker)
 
-### Option A: Systemd Service (Linux Server)
-1. Copy the systemd unit file:
+### Option A: Background Runner Scripts (No Root Required, Easiest)
+Run directly on any Linux VM, macOS, or cloud server without Docker or root access:
+
+1. **Setup & install dependencies:**
    ```bash
-   sudo cp deploy/cleantech-invoicing.service /etc/systemd/system/
+   ./deploy/setup_server.sh
    ```
-2. Reload systemd and enable service:
+2. **Start service in background:**
    ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl enable --now cleantech-invoicing.service
+   ./start.sh
    ```
-3. Check status:
+3. **Monitor status & logs:**
+   ```bash
+   ./status.sh
+   tail -f logs/invoice_automation.log
+   ```
+4. **Stop service:**
+   ```bash
+   ./stop.sh
+   ```
+
+---
+
+### Option B: Linux Systemd Service (Auto-Start on Boot, Auto-Restart)
+For production Ubuntu/Debian/RHEL servers:
+
+1. **Run the automated systemd installer:**
+   ```bash
+   sudo bash deploy/install_systemd.sh
+   ```
+2. **Manage the service:**
    ```bash
    sudo systemctl status cleantech-invoicing.service
-   journalctl -u cleantech-invoicing -f
+   sudo journalctl -u cleantech-invoicing.service -f
+   sudo systemctl restart cleantech-invoicing.service
    ```
 
-### Option B: Docker / Container
-Build and start the container with persistent volumes for data and logs:
+---
+
+### Option C: Cron Job (Run Periodic Single Checks)
+If you prefer periodic checks instead of a persistent loop:
+```bash
+# Run every 5 minutes
+*/5 * * * * cd /opt/invoicing-automation && .venv/bin/python -m src.main --once >> logs/cron.log 2>&1
+```
+
+---
+
+### Option D: Cloud PaaS Worker (Render / Railway / Heroku)
+The repository includes a [Procfile](file:///Users/sameermishra/Documents/Invoicing%20Automation/Procfile):
+```procfile
+worker: python -m src.main
+```
+Deploy as a **Background Worker** (not Web Service) on Render or Railway with Python runtime (no Docker required).
+
+---
+
+### Option E: Docker / Container (Optional)
+If you prefer Docker containers:
 ```bash
 docker compose up -d --build
 ```
