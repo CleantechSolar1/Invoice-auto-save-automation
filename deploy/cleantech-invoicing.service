@@ -1,0 +1,19 @@
+[Unit]
+Description=Cleantech Sales Invoice Email to SharePoint Filing Automation
+After=network.target
+
+[Service]
+Type=simple
+User=appuser
+Group=appuser
+WorkingDirectory=/opt/invoicing-automation
+ExecStart=/opt/invoicing-automation/.venv/bin/python -m src.main
+Restart=always
+RestartSec=10
+EnvironmentFile=/opt/invoicing-automation/.env
+Environment="TZ=Asia/Kolkata"
+StandardOutput=append:/var/log/invoicing-automation.stdout.log
+StandardError=append:/var/log/invoicing-automation.stderr.log
+
+[Install]
+WantedBy=multi-user.target
