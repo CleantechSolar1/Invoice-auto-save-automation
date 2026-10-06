@@ -42,6 +42,29 @@ class handler(BaseHTTPRequestHandler):
         dry_run = params.get("dry_run", ["false"])[0].lower() in ("1", "true", "yes")
 
         try:
+            # Check for missing required environment variables on serverless environments
+            missing_vars = []
+            if not settings.tenant_id:
+                missing_vars.append("TENANT_ID")
+            if not settings.client_id:
+                missing_vars.append("CLIENT_ID")
+            if not settings.client_secret:
+                missing_vars.append("CLIENT_SECRET")
+            if not settings.processing_mailbox:
+                missing_vars.append("PROCESSING_MAILBOX")
+            if not settings.invoice_group_address:
+                missing_vars.append("INVOICE_GROUP_ADDRESS")
+
+            if missing_vars and not dry_run:
+                self._send_json(200, {
+                    "status": "configuration_required",
+                    "service": "Cleantech Invoice Automation",
+                    "message": "Service is deployed, but required environment variables are not configured.",
+                    "missing_variables": missing_vars,
+                    "instructions": "Please configure these environment variables in your Vercel Project Settings (Settings -> Environment Variables) and redeploy.",
+                })
+                return
+
             if dry_run:
                 settings.dry_run = True
 
@@ -68,6 +91,7 @@ class handler(BaseHTTPRequestHandler):
             self._send_json(500, {
                 "status": "error",
                 "error": str(exc),
+                "type": exc.__class__.__name__,
             })
 
     def do_POST(self):
@@ -86,11 +110,6 @@ class handler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         # Clean logging output
         sys.stderr.write(f"[{self.log_date_time_string()}] {format % args}\n")
-
-
-# Alias app and application for WSGI/ASGI platform inspectors
-app = handler
-application = handler
 
 
 if __name__ == "__main__":
