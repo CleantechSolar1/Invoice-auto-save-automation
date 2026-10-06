@@ -65,11 +65,11 @@ class Settings(BaseSettings):
         description="If True, performs all validations without modifying SharePoint",
     )
     database_path: str = Field(
-        default="invoice_automation.db",
+        default="/tmp/invoice_automation.db" if os.environ.get("VERCEL") else "invoice_automation.db",
         description="SQLite database path for tracking processed emails",
     )
     log_file_path: str = Field(
-        default="logs/invoice_automation.log",
+        default="/tmp/invoice_automation.log" if os.environ.get("VERCEL") else "logs/invoice_automation.log",
         description="Log file path",
     )
 

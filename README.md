@@ -255,74 +255,69 @@ python -m src.main --dry-run --once
 
 ---
 
-## 11. Production Deployment (Without Docker & With Docker)
+## 11. Production & Cloud Deployment (Without Docker)
 
-### Option A: Background Runner Scripts (No Root Required, Easiest)
-Run directly on any Linux VM, macOS, or cloud server without Docker or root access:
+### Option A: Local & Background Runner (Easiest)
+Run directly on any macOS, Linux VM, or local environment:
 
-1. **Setup & install dependencies:**
-   ```bash
-   ./deploy/setup_server.sh
-   ```
-2. **Start service in background:**
+1. **Start continuous background service:**
    ```bash
    ./start.sh
    ```
-3. **Monitor status & logs:**
+2. **Monitor status & logs:**
    ```bash
    ./status.sh
    tail -f logs/invoice_automation.log
    ```
-4. **Stop service:**
+3. **Stop service:**
    ```bash
    ./stop.sh
    ```
 
 ---
 
-### Option B: Linux Systemd Service (Auto-Start on Boot, Auto-Restart)
-For production Ubuntu/Debian/RHEL servers:
-
-1. **Run the automated systemd installer:**
-   ```bash
-   sudo bash deploy/install_systemd.sh
-   ```
-2. **Manage the service:**
-   ```bash
-   sudo systemctl status cleantech-invoicing.service
-   sudo journalctl -u cleantech-invoicing.service -f
-   sudo systemctl restart cleantech-invoicing.service
-   ```
+### Option B: Local Web Server (Vercel-Compatible)
+Test the exact Vercel HTTP API locally on port 8000:
+```bash
+python api/index.py
+```
+- **Health check:** `http://localhost:8000/health`
+- **Run cycle:** `http://localhost:8000/`
+- **Dry-run cycle:** `http://localhost:8000/?dry_run=true`
 
 ---
 
-### Option C: Cron Job (Run Periodic Single Checks)
-If you prefer periodic checks instead of a persistent loop:
+### Option C: Vercel Free Tier Serverless Deployment
+This project is fully compatible with **Vercel Free Tier (Hobby)**:
+
+1. **Deploy to Vercel:**
+   Push to your GitHub repository and import the repository into [Vercel](https://vercel.com).
+2. **Configure Environment Variables in Vercel:**
+   Go to **Project Settings** > **Environment Variables** and add:
+   - `TENANT_ID`, `CLIENT_ID`, `CLIENT_SECRET`
+   - `PROCESSING_MAILBOX`, `INVOICE_GROUP_ADDRESS`
+   - `SHAREPOINT_HOSTNAME`, `SHAREPOINT_SITE_PATH`, `SHAREPOINT_LIBRARY_NAME`, `SHAREPOINT_ROOT_FOLDER`
+   - `FILTER_START_DATE=2026-10-06`
+   - `APP_TIMEZONE=Asia/Kolkata`
+3. **Automatic Cron & Endpoints:**
+   - [vercel.json](file:///Users/sameermishra/Documents/Invoicing%20Automation/vercel.json) routes incoming requests to [api/index.py](file:///Users/sameermishra/Documents/Invoicing%20Automation/api/index.py).
+   - Visiting `https://your-app.vercel.app/` triggers a check cycle and returns JSON results.
+   - Vercel Cron is configured to trigger automatic runs, or you can trigger `https://your-app.vercel.app/` via a free webhook scheduler (such as cron-job.org or GitHub Actions).
+
+---
+
+### Option D: Linux Systemd Service (Cloud Server / VM)
+For 24/7 background operation on Ubuntu/Debian/RHEL servers:
 ```bash
-# Run every 5 minutes
+sudo bash deploy/install_systemd.sh
+```
+
+---
+
+### Option E: Scheduled Cron Job
+If you prefer running a single check cycle periodically without background processes:
+```bash
 */5 * * * * cd /opt/invoicing-automation && .venv/bin/python -m src.main --once >> logs/cron.log 2>&1
-```
-
----
-
-### Option D: Cloud PaaS Worker (Render / Railway / Heroku)
-The repository includes a [Procfile](file:///Users/sameermishra/Documents/Invoicing%20Automation/Procfile):
-```procfile
-worker: python -m src.main
-```
-Deploy as a **Background Worker** (not Web Service) on Render or Railway with Python runtime (no Docker required).
-
----
-
-### Option E: Docker / Container (Optional)
-If you prefer Docker containers:
-```bash
-docker compose up -d --build
-```
-
-### Option C: Cron Job (Periodic execution)
-```bash
-* * * * * cd /opt/invoicing-automation && /opt/invoicing-automation/.venv/bin/python -m src.main --once >> /var/log/invoice_cron.log 2>&1
 ```
 
 ---
