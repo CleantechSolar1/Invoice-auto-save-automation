@@ -36,7 +36,7 @@ echo "[*] Starting Cleantech Invoice Automation in background..."
 echo "[*] Python executable: $PYTHON_BIN"
 echo "[*] Log file: $LOG_FILE"
 
-nohup "$PYTHON_BIN" -m src.main >> "$LOG_FILE" 2>&1 &
+nohup "$PYTHON_BIN" -m src.main > "$LOG_DIR/stdout.log" 2>&1 &
 NEW_PID=$!
 echo "$NEW_PID" > "$PID_FILE"
 
